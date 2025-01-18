@@ -2,22 +2,15 @@
 #define SERVER_H
 
 #include <stdio.h>
+#include <malloc.h>
+
 #include "protocol/commands/receive.h"
 #include "protocol/commands/send.h"
-#include "utils/status.h"
+#include "protocol/response.h"
+#include "utils/errors.h"
 
 #define PROTOCOL_VERSION 0x00010000 // 1.0.0
 #define BUFFER_LENGTH 2024
-
-typedef enum {
-    Success = 0,
-    MallocError,
-    VersionError,
-    TypeError,
-    LengthError,
-    ChecksumError,
-    PassportError
-} StatusCode;
 
 StatusCode handle() {
     uint8_t buffer[BUFFER_LENGTH];
@@ -46,42 +39,53 @@ StatusCode handle() {
             free(header);
             return PassportError;
         }
-        send(passport);
-        // TODO: implement send handler
+        int code = send(passport);
     } else if (header->type == RECEIVE) {
-        // TODO: implement receive handler
+        uint16_t series = *(uint16_t*)(buffer + HEADER_LENGTH - 1);
+        uint32_t number = *(uint32_t*)(buffer + HEADER_LENGTH + 1);
+        passport_t* passport = receive(series, number);
+        receive_response_t* receive_response = prepareReceiveResponse(*passport);
+        write(1, receive_response, sizeof(receive_response_t));
+        free(passport);
+        free(receive_response);
     } else {
         free(header);
         return TypeError;
     }
 
+    free(header);
     // printf("Version[%d] Type[%d] Length[%d] Checksum[%d]\n", header->version, header->type, header->length, header->checksum);
     return 0;
 }
 
 void handleError(StatusCode code) {
+    response_t* response = malloc(sizeof(response_t));
+
     switch (code) {
+        response->status = code;
         case MallocError:
-            fputs(MALLOC_ERROR, STDERR_FILENO);
+            strcpy(response->message, MALLOC_ERROR);
             break;
         case VersionError:
-            fputs(VERSION_ERROR, STDERR_FILENO);
+            strcpy(response->message, VERSION_ERROR);
             break;
         case TypeError:
-            fputs(TYPE_ERROR, STDERR_FILENO);
+            strcpy(response->message, TYPE_ERROR);
             break;
         case LengthError:
-            fputs(LENGTH_ERROR, STDERR_FILENO);
+            strcpy(response->message, LENGTH_ERROR);
             break;
         case ChecksumError:
-            fputs(CHECKSUM_ERROR, STDERR_FILENO);
+            strcpy(response->message, CHECKSUM_ERROR);
             break;
         case PassportError:
-            fputs(PASSPORT_ERROR, STDERR_FILENO);
+            strcpy(response->message, PASSPORT_ERROR);
             break;
         default:
-            fputs("Error: Unknown error code", STDERR_FILENO);
+            strcpy(response->message, UNKNOWN_ERROR);
     }
+    write(1, response, sizeof(response_t));
+    free(response);
 }
 
 #endif

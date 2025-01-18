@@ -7,6 +7,34 @@
 #include "../utils/date.h"
 
 typedef enum {
+    SEND = 0,
+    RECEIVE
+} PacketType;
+
+typedef struct {
+    uint32_t version;
+    PacketType type;
+    uint16_t length;
+    uint32_t checksum;
+} packet_header_t;
+
+#define HEADER_LENGTH (sizeof(packet_header_t))
+
+packet_header_t* parseHeader(uint8_t data[]) {
+    packet_header_t* header = malloc(sizeof(packet_header_t));
+    if (header == NULL) {
+        return NULL;
+    }
+
+    header->version = *(uint32_t*)data;
+    header->type = (PacketType)data[4];
+    header->length = *(uint16_t*)(data + 5);
+    header->checksum = *(uint32_t*)(data + 7);
+    
+    return header;
+}
+
+typedef enum {
     MALE = 0,
     FEMALE
 } Gender;
@@ -56,34 +84,6 @@ passport_t* parsePassport(uint8_t data[], uint32_t length) {
     strcpy(passport->birthPlace, birthPlace);
 
     return passport;
-}
-
-typedef enum {
-    SEND = 0,
-    RECEIVE
-} PacketType;
-
-typedef struct {
-    uint32_t version;
-    PacketType type;
-    uint16_t length;
-    uint32_t checksum;
-} packet_header_t;
-
-#define HEADER_LENGTH (sizeof(packet_header_t))
-
-packet_header_t* parseHeader(uint8_t data[]) {
-    packet_header_t* header = malloc(sizeof(packet_header_t));
-    if (header == NULL) {
-        return NULL;
-    }
-
-    header->version = *(uint32_t*)data;
-    header->type = (PacketType)data[4];
-    header->length = *(uint16_t*)(data + 5);
-    header->checksum = *(uint32_t*)(data + 7);
-    
-    return header;
 }
 
 #endif

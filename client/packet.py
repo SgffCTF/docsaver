@@ -87,7 +87,7 @@ class Passport:
         
         return output
 
-class Packet:
+class SendPacket:
     header: PacketHeader
     body: Passport
     
@@ -97,6 +97,32 @@ class Packet:
     
     def serialize(self):
         serialized_body = self.body.serialize()        
+        
+        self.header.length = len(serialized_body)
+        self.header.checksum = crc32(serialized_body)
+        
+        serialized_header = self.header.serialize()
+        
+        return serialized_header + serialized_body
+
+    def save(self, filename: str):
+        with open(filename, 'wb') as file:
+            file.write(self.serialize())
+
+class ReceivePacket:
+    header: PacketHeader
+    series: int
+    number: int
+    
+    def __init__(self, header, series, number):
+        self.header = header
+        self.series = series
+        self.number = number
+    
+    def serialize(self):
+        serialized_body = b''
+        serialized_body += struct.pack('<H', self.series)
+        serialized_body += struct.pack('<I', self.number)       
         
         self.header.length = len(serialized_body)
         self.header.checksum = crc32(serialized_body)

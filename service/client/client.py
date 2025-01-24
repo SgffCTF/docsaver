@@ -2,6 +2,9 @@ import struct
 from zlib import crc32
 
 
+VERSION = 0x00010000 # 1.0.0
+
+
 class Date:
     day: int
     month: int
@@ -33,13 +36,17 @@ class PacketHeader:
         output += struct.pack('<I', self.checksum)
         
         return output
+    
+    def save(self, filename: str):
+        with open(filename, 'wb') as file:
+            file.write(self.serialize())
 
 class Passport:
     series: int
     number: int
     birth_date: Date
     claim_date: Date
-    gender: int # 0 - male, 1 - female
+    gender: int # 0 - MALE, 1 - FAMALE
     surname: str
     name: str
     lastname: str
@@ -134,3 +141,30 @@ class ReceivePacket:
     def save(self, filename: str):
         with open(filename, 'wb') as file:
             file.write(self.serialize())
+
+
+def generate_send_packet(
+    series: int,
+    number: int,
+    birth_date: Date,
+    claim_date: Date,
+    gender: int,
+    surname: str,
+    name: str,
+    lastname: str,
+    birth_place: str
+) -> SendPacket:
+    header = PacketHeader(VERSION, 0)
+    passport = Passport(series, number, birth_date, claim_date, gender, surname, name, lastname, birth_place)
+    packet = SendPacket(header, passport)
+    return packet
+
+
+def generate_receive_packet(series: int, number: int):
+    header = PacketHeader(VERSION, 1)
+    packet = ReceivePacket(header, series, number)
+    return packet
+
+def generate_receive_all_packet():
+    header = PacketHeader(VERSION, 2)
+    return header

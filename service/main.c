@@ -3,7 +3,7 @@
 #include "src/server.h"
 
 void setup() {
-    alarm(5);
+    // alarm(5);
     setvbuf(stdin, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);
     setvbuf(stdout, NULL, _IONBF, 0);
@@ -17,5 +17,7 @@ int main() {
         return 1;
     }
     
-    return handle();
+    handle();
+    
+    return 0;
 }

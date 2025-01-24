@@ -4,11 +4,17 @@
 #include <stdint.h>
 #include <string.h>
 
+#include "status.h"
 #include "../utils/date.h"
+
+const char* SAVEPATH = "data/";
+const int SAVEPATH_LENGTH = 5;
+const int FILENAME_LENGTH = 11;
 
 typedef enum {
     SEND = 0,
-    RECEIVE
+    RECEIVE,
+    RECEIVE_ALL
 } PacketType;
 
 typedef struct {
@@ -18,7 +24,7 @@ typedef struct {
     uint32_t checksum;
 } packet_header_t;
 
-#define HEADER_LENGTH (sizeof(packet_header_t))
+#define HEADER_LENGTH 11
 
 packet_header_t* parseHeader(uint8_t data[]) {
     packet_header_t* header = malloc(sizeof(packet_header_t));
@@ -82,6 +88,27 @@ passport_t* parsePassport(uint8_t data[], uint32_t length) {
     strcpy(passport->name, name);
     strcpy(passport->lastname, lastname);
     strcpy(passport->birthPlace, birthPlace);
+
+    return passport;
+}
+
+passport_t* readPassport(char* filepath) {
+    FILE* file = fopen(filepath, "rb");
+    if (file == NULL) {
+        return NULL;
+    }
+
+    uint8_t* bytes = malloc(sizeof(passport_t));
+    if (bytes == NULL) {
+        fclose(file);
+        return NULL;
+    }
+    size_t bytesRead = fread(bytes, 1, sizeof(passport_t), file);
+
+    fclose(file);
+
+    passport_t* passport = parsePassport(bytes, bytesRead);
+    free(bytes);
 
     return passport;
 }

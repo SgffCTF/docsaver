@@ -2,7 +2,7 @@ import struct
 from zlib import crc32
 
 
-VERSION = 0x00000100 # 0.1.0
+VERSION = 0x00010000 # 1.0.0
 
 
 class Date:
@@ -14,6 +14,9 @@ class Date:
         self.day = day
         self.month = month
         self.year = year
+    
+    def __str__(self):
+        return f"{self.day}.{self.month}.{self.year}"
 
 class PacketHeader:
     version: int
@@ -73,6 +76,15 @@ class Passport:
         self.name = name
         self.lastname = lastname
         self.birth_place = birth_place
+    
+    
+    def __str__(self):
+        return f"""{self.surname} {self.name} {self.lastname}
+        {self.series} {self.number}
+        Gender: {"Male" if self.gender == 0 else "Female"}
+        Birth Date: {self.birth_date.__str__()}
+        Claim Date: {self.claim_date.__str__()}
+        Birth Place: {self.birth_place}"""
         
     
     def serialize(self) -> bytes:
@@ -120,16 +132,19 @@ class ReceivePacket:
     header: PacketHeader
     series: int
     number: int
+    token: str
     
-    def __init__(self, header, series, number):
+    def __init__(self, header, series, number, token):
         self.header = header
         self.series = series
         self.number = number
+        self.token = token
     
     def serialize(self):
         serialized_body = b''
         serialized_body += struct.pack('<H', self.series)
-        serialized_body += struct.pack('<I', self.number)       
+        serialized_body += struct.pack('<I', self.number)
+        serialized_body += self.token.encode() + b'\x00'
         
         self.header.length = len(serialized_body)
         self.header.checksum = crc32(serialized_body)
@@ -143,28 +158,43 @@ class ReceivePacket:
             file.write(self.serialize())
 
 
-def generate_send_packet(
-    series: int,
-    number: int,
-    birth_date: Date,
-    claim_date: Date,
-    gender: int,
-    surname: str,
-    name: str,
-    lastname: str,
-    birth_place: str
-) -> SendPacket:
+def parse_passport(text: bytes):
+    series = int(text[:2][::-1].hex(), 16)
+    number = int(text[2:6][::-1].hex(), 16)
+    birth_date = parse_date(text[6:10])
+    claim_date = parse_date(text[10:14])
+    gender = text[14]
+    shift = 15
+    surname, next = parse_string(text[15:])
+    shift += next
+    name, next = parse_string(text[shift:])
+    shift += next
+    lastname, next = parse_string(text[shift:])
+    shift += next
+    birth_place, next = parse_string(text[shift:])
+    shift += next
+    return Passport(series, number, birth_date, claim_date, gender, surname, name, lastname, birth_place), shift
+    
+    
+def parse_date(text: bytes) -> Date:
+    year = int(text[:2][::-1].hex(), 16)
+    month = text[2]
+    day = text[3]
+    return Date(day, month, year)
+    
+
+def parse_string(text: bytes):
+    null_index = text.find(b"\x00")
+    return text[:null_index].decode(), null_index + 1
+
+
+def generate_send_packet(passport: Passport) -> SendPacket:
     header = PacketHeader(VERSION, 0)
-    passport = Passport(series, number, birth_date, claim_date, gender, surname, name, lastname, birth_place)
     packet = SendPacket(header, passport)
     return packet
 
 
-def generate_receive_packet(series: int, number: int):
+def generate_receive_packet(series: int, number: int, token: str):
     header = PacketHeader(VERSION, 1)
-    packet = ReceivePacket(header, series, number)
+    packet = ReceivePacket(header, series, number, token)
     return packet
-
-def generate_receive_all_packet():
-    header = PacketHeader(VERSION, 2)
-    return header

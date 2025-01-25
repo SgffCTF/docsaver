@@ -5,22 +5,33 @@
 #include <openssl/md5.h>
 
 #include "../protocol.h"
+#include "../status.h"
+
+#define TOKEN_LENGTH 16
 
 typedef struct {
     StatusCode status;
     char message[128];
-} response_t;
+    char* token;
+} send_response_t;
 
-response_t* prepareSendResponse(passport_t passport) {
-    response_t* response = malloc(sizeof(response_t));
+send_response_t* prepareSendResponse(char* token) {
+    send_response_t* response = malloc(sizeof(send_response_t));
     if (response == NULL) {
         return NULL;
     }
 
     response->status = Success;
     strcpy(response->message, SEND_SUCCESS);
+    response->token = token;
 
     return response;
+}
+
+void writeSendResponse(send_response_t* response) {
+    write(1, &response->status, sizeof(StatusCode));
+    write(1, response->message, strlen(response->message) + 1);
+    write(1, response->token, TOKEN_LENGTH + 1);
 }
 
 uint8_t* serializePassport(passport_t* passport, uint32_t* serLength) {
@@ -75,10 +86,21 @@ uint8_t* serializePassport(passport_t* passport, uint32_t* serLength) {
     return data;
 }
 
-int send(passport_t* passport) {
-    char filepath[SAVEPATH_LENGTH + FILENAME_LENGTH + 1];
-    sprintf(filepath, "%s%04u_%06u", SAVEPATH, passport->series, passport->number);
-    filepath[SAVEPATH_LENGTH + 12] = '\x00';
+char* generateToken() {
+    char* token = malloc(TOKEN_LENGTH + 1);
+    for (size_t i = 0; i < TOKEN_LENGTH; i++) {
+        token[i] = 97 + rand() % 26;
+    }
+    token[TOKEN_LENGTH] = '\x00';
+    return token;
+}
+
+char* send(passport_t* passport) {
+    char filepath[SAVEPATH_LENGTH + FILENAME_LENGTH + TOKEN_LENGTH + 3];
+    char* token = generateToken();
+
+    sprintf(filepath, "%s%04u_%06u_%16s", SAVEPATH, passport->series, passport->number, token);
+    filepath[SAVEPATH_LENGTH + FILENAME_LENGTH + TOKEN_LENGTH + 2] = '\x00';
 
     uint32_t serLength;
     uint8_t* data = serializePassport(passport, &serLength);
@@ -89,7 +111,7 @@ int send(passport_t* passport) {
 
     free(data);
 
-    return 0;
+    return token;
 }
 
 #endif

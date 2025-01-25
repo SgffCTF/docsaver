@@ -1,8 +1,10 @@
 #include <unistd.h>
+#include <time.h>
 
 #include "src/server.h"
 
 void setup() {
+    srand(time(NULL));
     // alarm(5);
     setvbuf(stdin, NULL, _IONBF, 0);
     setvbuf(stderr, NULL, _IONBF, 0);

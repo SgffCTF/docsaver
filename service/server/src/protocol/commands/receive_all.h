@@ -2,14 +2,15 @@
 #define RECEIVE_ALL_COMMAND_H
 
 #include "../protocol.h"
+#include "../status.h"
 #include "receive.h"
 #include "../../utils/file.h"
 
 typedef struct {
-    uint32_t countPassports;
-    passport_t** passports;
     StatusCode status;
     char message[128];
+    uint32_t countPassports;
+    passport_t** passports;
 } receive_all_response_t;
 
 receive_all_response_t* prepareReceiveAllResponse(passport_t** passports, uint32_t countPassports) {
@@ -24,11 +25,12 @@ receive_all_response_t* prepareReceiveAllResponse(passport_t** passports, uint32
 }
 
 void writeReceiveAllResponse(receive_all_response_t* response) {
-    for (size_t i = 0; i < response->countPassports; i++) {
-        write(1, response->passports[i], sizeof(passport_t));
-    }
     write(1, &response->status, sizeof(StatusCode));
-    fputs(response->message, stdout);
+    write(1, response->message, strlen(response->message) + 1);
+    write(1, &response->countPassports, 4);
+    for (uint32_t i = 0; i < response->countPassports; i++) {
+        writePassport(response->passports[i]);
+    }
 }
 
 uint32_t receiveAll(passport_t*** result) {

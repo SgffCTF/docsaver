@@ -26,8 +26,7 @@ date_t* parseDate(uint8_t data[]) {
     bool isValid = true;
     if (month > 12 || day > 31) {
         isValid = false;
-    }
-    if ((year % 4 == 0 && month == 2 && day > 29) || daysInMonth[month - 1] < day) {
+    } else if ((year % 4 == 0 && month == 2 && day > 29) || daysInMonth[month - 1] < day) {
         isValid = false;
     }
 

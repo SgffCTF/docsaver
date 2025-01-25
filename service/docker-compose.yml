@@ -1,0 +1,14 @@
+services:
+  docsaver:
+    container_name: docsaver
+    ports:
+      - 16001:1337
+    build:
+      context: server
+      dockerfile: Dockerfile
+    volumes:
+      - ./data:/task/data
+    restart: on-failure
+    pids_limit: 1024
+    cpus: 0.5
+    mem_limit: 512M

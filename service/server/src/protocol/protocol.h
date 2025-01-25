@@ -4,7 +4,6 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "status.h"
 #include "../utils/date.h"
 
 const char* SAVEPATH = "data/";
@@ -111,6 +110,18 @@ passport_t* readPassport(char* filepath) {
     free(bytes);
 
     return passport;
+}
+
+void writePassport(passport_t* passport) {
+    write(1, &passport->series, 2);
+    write(1, &passport->number, 4);
+    write(1, passport->birthDate, 4);
+    write(1, passport->claimDate, 4);
+    write(1, &passport->gender, sizeof(Gender));
+    write(1, passport->surname, strlen(passport->surname) + 1);
+    write(1, passport->name, strlen(passport->name) + 1);
+    write(1, passport->lastname, strlen(passport->lastname) + 1);
+    write(1, passport->birthPlace, strlen(passport->birthPlace) + 1);
 }
 
 #endif

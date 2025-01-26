@@ -1,4 +1,4 @@
-from client import Client
+from client.client import Client
 from packet import *
 
 
@@ -6,7 +6,6 @@ if __name__ == "__main__":
     client = Client("localhost", 16001)
     
     # === SEND === 
-    
     passport = Passport(
         7788,
         123321,
@@ -20,7 +19,7 @@ if __name__ == "__main__":
     )
     response = client.send_passport(passport)
     print(response.token)
+    
     # === RECV ===
-
     response = client.recv_passport(7788, 123321, response.token)
     print(response.passport)

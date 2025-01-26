@@ -49,3 +49,13 @@ class Client:
         response.parse(self.recv())
         
         return response
+
+    def ping(self):
+        self.send(b"test\n")
+        response = self.recv()
+        status = response[0]
+        message = response[1:]
+
+        if status == 4 and message == b'error: invalid packet length':
+            return True
+        return False

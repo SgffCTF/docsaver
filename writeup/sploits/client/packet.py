@@ -2,7 +2,7 @@ import struct
 from zlib import crc32
 
 
-VERSION = 0x00010000 # 1.0.0
+VERSION = 0x00000100 # 1.0.0
 
 
 class Date:
@@ -99,10 +99,10 @@ class Passport:
         output += struct.pack('<B', self.claim_date.month)
         output += struct.pack('<B', self.claim_date.day)
         output += struct.pack('<B', self.gender)
-        output += self.surname.encode() + b'\x00'
-        output += self.name.encode() + b'\x00'
-        output += self.lastname.encode() + b'\x00'
-        output += self.birth_place.encode() + b'\x00'
+        output += self.surname.encode('utf-8') + b'\x00'
+        output += self.name.encode('utf-8') + b'\x00'
+        output += self.lastname.encode('utf-8') + b'\x00'
+        output += self.birth_place.encode('utf-8') + b'\x00'
         
         return output
 
@@ -114,10 +114,10 @@ class SendPacket:
         self.header = header
         self.body = body
     
-    def serialize(self):
+    def serialize(self, padding=0):
         serialized_body = self.body.serialize()        
         
-        self.header.length = len(serialized_body)
+        self.header.length = len(serialized_body) + padding
         self.header.checksum = crc32(serialized_body)
         
         serialized_header = self.header.serialize()
@@ -144,7 +144,7 @@ class ReceivePacket:
         serialized_body = b''
         serialized_body += struct.pack('<H', self.series)
         serialized_body += struct.pack('<I', self.number)
-        serialized_body += self.token.encode() + b'\x00'
+        serialized_body += self.token.encode() + '\x00'
         
         self.header.length = len(serialized_body)
         self.header.checksum = crc32(serialized_body)
@@ -185,7 +185,7 @@ def parse_date(text: bytes) -> Date:
 
 def parse_string(text: bytes):
     null_index = text.find(b"\x00")
-    return text[:null_index].decode(), null_index + 1
+    return text[:null_index].decode(), null_index + 2
 
 
 def generate_send_packet(passport: Passport) -> SendPacket:
@@ -198,3 +198,7 @@ def generate_receive_packet(series: int, number: int, token: str):
     header = PacketHeader(VERSION, 1)
     packet = ReceivePacket(header, series, number, token)
     return packet
+
+def generate_receive_all_packet():
+    header = PacketHeader(VERSION, 2)
+    return header

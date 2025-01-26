@@ -18,6 +18,7 @@ typedef enum {
     PassportSurnameError,
     PassportNameError,
     PassportLastnameError,
+    PassportBirthPlaceError,
     PassportNotFoundError
 } StatusCode;
 
@@ -38,6 +39,7 @@ const char CHECKSUM_ERROR[] = "error: invalid checksum";
 const char PASSPORT_SERIES_ERROR[] = "error: invalid series in passport";
 const char PASSPORT_NUMBER_ERROR[] = "error: invalid number in passport";
 const char PASSPORT_BIRTHDATE_ERROR[] = "error: invalid birth date in passport";
+const char PASSPORT_BIRTHPLACE_ERROR[] = "error: invalid birth place in passport";
 const char PASSPORT_CLAIMDATE_ERROR[] = "error: invalid claim date in passport";
 const char PASSPORT_GENDER_ERROR[] = "error: invalid gender in passport";
 const char PASSPORT_SURNAME_ERROR[] = "error: invalid surname in passport";

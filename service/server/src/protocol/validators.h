@@ -46,7 +46,7 @@ int validatePassport(passport_t* passport) {
     if (!validateField(passport->name, strlen(passport->name))) {
         return PassportNameError;
     }
-    if (!validateField(passport->name, strlen(passport->name))) {
+    if (!validateField(passport->lastname, strlen(passport->lastname))) {
         return PassportLastnameError;
     }
     return 0;

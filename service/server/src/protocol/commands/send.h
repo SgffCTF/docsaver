@@ -2,7 +2,6 @@
 #define SEND_COMMAND_H
 
 #include <stdlib.h>
-#include <openssl/md5.h>
 
 #include "../protocol.h"
 #include "../status.h"

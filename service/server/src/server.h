@@ -18,7 +18,7 @@ StatusCode handle() {
     uint8_t buffer[HEADER_LENGTH+BODY_LENGTH];
 
     while (true) {
-        int packetLen = read(0, buffer, 2024);
+        int packetLen = read(0, buffer, 1024);
 
         if (!strncmp(buffer, "exit", 4) || packetLen <= 0) {
             break;
@@ -46,7 +46,7 @@ StatusCode handle() {
                 handleError(LengthError, NULL);
                 continue;
             }
-            if (!validateChecksum(&buffer[HEADER_LENGTH], packetLen-HEADER_LENGTH, header->checksum)) {
+            if (!validateChecksum(&buffer[HEADER_LENGTH], header->length, header->checksum)) {
                 free(header);
                 free(passport);
                 handleError(ChecksumError, NULL);
@@ -69,7 +69,7 @@ StatusCode handle() {
         } else if (header->type == RECEIVE) {
             receive_request_t* request = parseReceiveRequest(&buffer[HEADER_LENGTH]);
             
-            if (!validateChecksum(&buffer[HEADER_LENGTH], packetLen-HEADER_LENGTH, header->checksum)) {
+            if (!validateChecksum(&buffer[HEADER_LENGTH], header->length, header->checksum)) {
                 free(header);
                 handleError(ChecksumError, NULL);
                 continue;

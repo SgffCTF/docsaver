@@ -5,7 +5,7 @@ from client.responses import *
 
 
 class Client:
-    s: socket.socket
+    s: socket.socket = None
     
     def __init__(self, host: str, port: int):
         self.connect(host, port)
@@ -29,7 +29,6 @@ class Client:
         return b''.join(chunks)
 
     def recv(self, count=1024) -> bytes:
-        time.sleep(0.1)
         return self.s.recv(count)
     
     def send_passport(self, passport: Passport) -> SendResponse:
@@ -46,6 +45,15 @@ class Client:
         self.send(packet.serialize())
         
         response = ReceiveResponse()
+        response.parse(self.recv())
+        
+        return response
+    
+    def recv_all(self):
+        packet = generate_receive_all_packet()
+        self.send(packet.serialize())
+        
+        response = ReceiveAllResponse()
         response.parse(self.recv())
         
         return response

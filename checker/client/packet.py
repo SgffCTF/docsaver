@@ -1,3 +1,5 @@
+import random
+import string
 import struct
 from zlib import crc32
 
@@ -99,10 +101,10 @@ class Passport:
         output += struct.pack('<B', self.claim_date.month)
         output += struct.pack('<B', self.claim_date.day)
         output += struct.pack('<B', self.gender)
-        output += self.surname.encode() + b'\x00'
-        output += self.name.encode() + b'\x00'
-        output += self.lastname.encode() + b'\x00'
-        output += self.birth_place.encode() + b'\x00'
+        output += self.surname.encode('utf-8') + b'\x00'
+        output += self.name.encode('utf-8') + b'\x00'
+        output += self.lastname.encode('utf-8') + b'\x00'
+        output += self.birth_place.encode('utf-8') + b'\x00'
         
         return output
 
@@ -198,3 +200,22 @@ def generate_receive_packet(series: int, number: int, token: str):
     header = PacketHeader(VERSION, 1)
     packet = ReceivePacket(header, series, number, token)
     return packet
+
+def random_str(alphabet=string.ascii_letters, length=16) -> str:
+    result = ''
+    for _ in range(length):
+        result += random.choice(alphabet)
+    return result
+
+def generate_random_passport(flag=None) -> Passport:
+    return Passport(
+        random.randint(1000, 9999),
+        random.randint(100_000, 999_999),
+        Date(random.randint(1, 28), random.randint(1, 12), random.randint(1990, 2005)),
+        Date(random.randint(1, 28), random.randint(1, 12), random.randint(2000, 2024)),
+        random.randint(0, 1),
+        random_str(),
+        random_str(),
+        random_str(),
+        random_str() if flag is None else flag
+    )

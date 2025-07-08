@@ -8,7 +8,7 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ./data:/task/data
-    restart: on-failure
+    restart: always
     pids_limit: 1024
     cpus: 0.5
     mem_limit: 512M
